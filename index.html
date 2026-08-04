@@ -253,7 +253,7 @@
       </div>
       <div class="hero-kpi-row">
         <span class="badge">h-index: <b>51</b></span>
-        <span class="badge">Citation: <b>1,042</b></span>
+        <span class="badge">Citation: <b>1042</b></span>
       </div>
       <div class="hero-mini-stats">
         <div><div class="num" id="statPublished">–</div><div class="lbl">Published</div></div>
@@ -290,13 +290,13 @@
     </div>
     <div class="highlights-grid">
       <div class="card">
-        <h3>Citation Overview</h3>
+        <h3>Citation overview</h3>
         <div class="card-sub">Publications and citations, by year</div>
         <div class="card-chart chart-citation"><canvas id="chartCitation"></canvas></div>
         <div class="legend-list" id="legendCitation"></div>
       </div>
       <div class="card">
-        <h3>Publication Type</h3>
+        <h3>Publication type</h3>
         <div class="card-sub">Articles, book chapters, proceedings &amp; more</div>
         <div class="card-chart"><canvas id="chartType"></canvas></div>
         <div class="legend-list" id="legendType"></div>
@@ -627,22 +627,42 @@ function parseCSVText(text){
 function buildCitationAggregation(text){
   const rows = parseCSVText(text);
   const headerIdx = rows.findIndex(r => String(r[0]||'').trim().toLowerCase() === 'publication year');
-  const byYear = {};
-  if(headerIdx === -1) return { years: [], byYear };
+  if(headerIdx === -1 || headerIdx === 0) return { years: [], byYear: {} };
+
+  /* Row directly above the header holds the citation-year bucket labels
+     (columns G onward: <2021, 2021, 2022, ...). The header row itself
+     doubles as the "total citations per bucket" row in those same
+     columns (e.g. G7:M7). We keep only buckets that are a plain 4-digit
+     year — the "<2021" bucket has no single year to plot it against. */
+  const labelRow = rows[headerIdx - 1] || [];
+  const totalsRow = rows[headerIdx] || [];
+  const citationTotals = {};
+  for(let c = 6; c < Math.max(labelRow.length, totalsRow.length); c++){
+    const label = String(labelRow[c] || '').trim();
+    if(!/^\d{4}$/.test(label)) continue;
+    const n = parseInt(String(totalsRow[c] || '').trim(), 10);
+    citationTotals[label] = isNaN(n) ? 0 : n;
+  }
+
+  /* Bar data: count of documents per Publication Year (column A),
+     same as before. */
+  const pubCounts = {};
   for(let i = headerIdx + 1; i < rows.length; i++){
     const r = rows[i];
     if(!r || !r[0] || !String(r[0]).trim()) continue;
     const year = String(r[0]).trim();
     if(!/^\d{4}$/.test(year)) continue;
-    const citeSum = r.slice(6).reduce((sum, v) => {
-      const n = parseInt(String(v).trim(), 10);
-      return sum + (isNaN(n) ? 0 : n);
-    }, 0);
-    if(!byYear[year]) byYear[year] = { publications: 0, citations: 0 };
-    byYear[year].publications += 1;
-    byYear[year].citations += citeSum;
+    pubCounts[year] = (pubCounts[year] || 0) + 1;
   }
-  const years = Object.keys(byYear).sort((a,b)=> a - b);
+
+  const years = Object.keys(pubCounts).sort((a,b)=> a - b);
+  const byYear = {};
+  years.forEach(y => {
+    byYear[y] = {
+      publications: pubCounts[y],
+      citations: Object.prototype.hasOwnProperty.call(citationTotals, y) ? citationTotals[y] : null
+    };
+  });
   return { years, byYear };
 }
 
@@ -707,7 +727,7 @@ function citationChart(canvasId, labels, pubData, citeData){
       plugins: {
         legend: { display: false },
         tooltip: { callbacks: {
-          label: (c) => ` ${c.dataset.label}: ${c.parsed.y.toLocaleString()}`
+          label: (c) => ` ${c.dataset.label}: ${c.parsed.y == null ? 'no data' : c.parsed.y.toLocaleString()}`
         }}
       },
       scales: {
@@ -734,8 +754,8 @@ function renderCitationCard(){
   const citeData = labels.map(y => CITATION_BY_YEAR[y].citations);
   charts.citation = citationChart('chartCitation', labels, pubData, citeData);
   const totalPubs = pubData.reduce((a,b)=>a+b,0);
-  const totalCites = citeData.reduce((a,b)=>a+b,0);
-  if(sub) sub.textContent = `${totalPubs.toLocaleString()} publications \u00b7 ${totalCites.toLocaleString()} citations, by year`;
+  const totalCites = citeData.reduce((a,b)=> a + (b || 0), 0);
+  if(sub) sub.textContent = `${totalPubs.toLocaleString()} publications \u00b7 ${totalCites.toLocaleString()} citations (2021\u20132026), by year`;
   renderLegend('legendCitation',
     [['Publications', totalPubs],['Citations', totalCites]],
     (l) => l === 'Publications' ? COLORS.teal : COLORS.gold
