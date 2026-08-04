@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Publication Dashboard 2026 · INCEIF University</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --navy:#073B4C;
+    --navy-deep:#052A36;
+    --ink:#1c1c1e;
+    --gold:#5FB849;
+    --gold-soft:#8ED17A;
+    --teal:#00A6D7;
+    --teal-soft:#cdeef9;
+    --parchment:#F2F6F7;
+    --paper:#ffffff;
+    --slate:#58585A;
+    --line:#DCE4E7;
+    --red-soft:#3c3c3e;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--parchment);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(7,59,76,0.07) 1px, transparent 0);
+    background-size: 22px 22px;
+  }
+  h1,h2,h3,.display{font-family:'Manrope',sans-serif; letter-spacing:-.01em;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  a{color:inherit;}
+
+  /* ---------- signature: 8-point star motif, used sparingly ---------- */
+  .star8{ display:inline-block; }
+  .rosette-bg{
+    position:absolute; inset:0; opacity:.08; pointer-events:none;
+    background-repeat:repeat; background-size:64px 64px;
+  }
+
+  /* ---------- layout shell ---------- */
+  .wrap{max-width:1280px; margin:0 auto; padding:0 28px 80px;}
+
+  .topbar{
+    background:var(--navy);
+    color:#f2ece0;
+    border-bottom:3px solid var(--gold);
+  }
+  .topbar-inner{
+    max-width:1280px; margin:0 auto; padding:18px 28px;
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  }
+  .brand{display:flex; align-items:center; gap:14px;}
+  .brand-mark-plate{
+    background:#ffffff; border-radius:8px; padding:7px 10px; flex:none;
+    display:flex; align-items:center; box-shadow:0 1px 2px rgba(0,0,0,.15);
+  }
+  .brand-mark-img{height:26px; width:auto; display:block;}
+  .brand-text .eyebrow{
+    text-transform:uppercase; letter-spacing:.14em; font-size:11px; color:var(--gold-soft); font-weight:600;
+  }
+  .brand-text .name{font-family:'Manrope',sans-serif; font-size:19px; font-weight:700; line-height:1.15;}
+  .topbar-actions{display:flex; align-items:center; gap:10px;}
+  .btn{
+    font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px;
+    padding:10px 16px; border-radius:9px; border:1px solid transparent;
+    cursor:pointer; display:inline-flex; align-items:center; gap:8px;
+    transition:transform .12s ease, background .15s ease;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn-gold{background:var(--gold); color:var(--navy-deep);}
+  .btn-gold:hover{background:var(--gold-soft);}
+  .btn-ghost{background:transparent; color:#f2ece0; border-color:rgba(242,236,224,.35);}
+  .btn-ghost:hover{background:rgba(242,236,224,.1);}
+  .file-name-tag{font-size:12px; color:rgba(242,236,224,.75); max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+
+  /* ---------- hero ---------- */
+  .hero{
+    position:relative; overflow:hidden;
+    background:linear-gradient(160deg, var(--navy) 0%, var(--navy-deep) 70%);
+    color:#f2ece0;
+  }
+  .hero-inner{
+    max-width:1280px; margin:0 auto; padding:52px 28px 46px;
+    display:grid; grid-template-columns: 1.2fr 0.9fr; gap:40px; align-items:center;
+    position:relative; z-index:1;
+  }
+  .hero-eyebrow{text-transform:uppercase; letter-spacing:.16em; font-size:12px; color:var(--gold-soft); font-weight:700; margin-bottom:14px;}
+  .hero h1{font-size:40px; line-height:1.12; margin:0 0 14px; font-weight:600; max-width:560px;}
+  .hero p{color:rgba(242,236,224,.75); font-size:15px; line-height:1.6; max-width:480px; margin:0 0 26px;}
+  .hero-target-row{display:flex; align-items:center; gap:10px; font-size:13px; color:rgba(242,236,224,.8);}
+  .hero-target-row input{
+    width:64px; background:rgba(255,255,255,.08); border:1px solid rgba(242,236,224,.3);
+    color:#f2ece0; border-radius:6px; padding:6px 8px; font-family:'IBM Plex Mono',monospace; font-size:14px;
+  }
+  .hero-kpi-row{display:flex; gap:22px; margin-top:14px; flex-wrap:wrap;}
+  .hero-kpi-row .badge{
+    display:flex; align-items:center; gap:8px; font-size:13px; color:rgba(242,236,224,.85);
+    background:rgba(255,255,255,.06); border:1px solid rgba(242,236,224,.2);
+    padding:7px 14px; border-radius:20px;
+  }
+  .hero-kpi-row .badge b{font-family:'IBM Plex Mono',monospace; color:#f2ece0; font-size:14px;}
+  .hero-mini-stats{display:flex; gap:26px; margin-top:26px; flex-wrap:wrap;}
+  .hero-mini-stats div{border-left:2px solid var(--gold); padding-left:12px;}
+  .hero-mini-stats .num{font-family:'IBM Plex Mono',monospace; font-size:22px; font-weight:600;}
+  .hero-mini-stats .lbl{font-size:11.5px; color:rgba(242,236,224,.65); text-transform:uppercase; letter-spacing:.08em;}
+
+  /* radial progress rosette */
+  .gauge-wrap{display:flex; flex-direction:column; align-items:center; justify-content:center;}
+  .gauge{position:relative; width:270px; height:270px;}
+  .gauge svg{width:100%; height:100%; transform:rotate(-90deg);}
+  .gauge-center{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .gauge-center .count{font-family:'IBM Plex Mono',monospace; font-size:44px; font-weight:600; line-height:1;}
+  .gauge-center .of{font-size:12.5px; color:rgba(242,236,224,.65); margin-top:6px;}
+  .gauge-center .pct{font-size:13px; color:var(--gold-soft); font-weight:600; margin-top:4px;}
+
+  /* ---------- section headers ---------- */
+  .section{margin-top:52px;}
+  .section-head{display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap;}
+  .section-head h2{font-size:22px; margin:0; font-weight:600;}
+  .section-head .sub{font-size:13px; color:var(--slate);}
+  .section-tag{
+    display:inline-flex; align-items:center; gap:6px; font-size:11px; text-transform:uppercase;
+    letter-spacing:.1em; font-weight:700; color:var(--teal); background:var(--teal-soft);
+    padding:4px 10px; border-radius:20px; margin-bottom:8px;
+  }
+
+  /* ---------- highlight cards (Scopus / Type / Quartile) ---------- */
+  .highlights-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:20px;}
+  .card{
+    background:var(--paper); border:1px solid var(--line); border-radius:var(--radius);
+    padding:22px; position:relative;
+  }
+  .card h3{font-size:16px; margin:0 0 4px; font-weight:600;}
+  .card .card-sub{font-size:12.5px; color:var(--slate); margin-bottom:14px;}
+  .card-chart{height:170px; position:relative; margin-bottom:12px;}
+  .card-chart.chart-citation{height:210px;}
+  .legend-list{display:flex; flex-direction:column; gap:7px; font-size:13px;}
+  .legend-row{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .legend-left{display:flex; align-items:center; gap:8px; min-width:0;}
+  .swatch{width:9px; height:9px; border-radius:2px; flex:none;}
+  .legend-name{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .legend-val{font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:12.5px; color:var(--ink);}
+
+  /* ---------- secondary stat strip ---------- */
+  .secondary-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:16px;}
+  .stat-card{
+    background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:18px;
+  }
+  .stat-card .top{display:flex; align-items:center; justify-content:space-between;}
+  .stat-card .n{font-family:'IBM Plex Mono',monospace; font-size:26px; font-weight:600;}
+  .stat-card .l{font-size:12px; color:var(--slate); margin-top:4px;}
+  .bar-track{height:6px; background:var(--line); border-radius:4px; overflow:hidden; margin-top:12px;}
+  .bar-fill{height:100%; background:var(--teal);}
+
+  /* ---------- table ---------- */
+  .table-controls{
+    display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center;
+  }
+  .table-controls input[type=text]{
+    flex:1; min-width:220px; padding:10px 14px; border:1px solid var(--line); border-radius:9px;
+    font-family:'Inter',sans-serif; font-size:13.5px; background:var(--paper);
+  }
+  .table-controls select{
+    padding:10px 12px; border:1px solid var(--line); border-radius:9px; background:var(--paper);
+    font-family:'Inter',sans-serif; font-size:13px; color:var(--ink);
+  }
+  .table-scroll{
+    background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); overflow:auto; max-height:640px;
+  }
+  table{border-collapse:collapse; width:100%; font-size:13px;}
+  thead th{
+    position:sticky; top:0; background:var(--navy); color:#f2ece0; text-align:left;
+    padding:12px 14px; font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; white-space:nowrap;
+    z-index:2;
+  }
+  tbody td{padding:11px 14px; border-bottom:1px solid var(--line); vertical-align:top;}
+  tbody tr:hover{background:#faf7ee;}
+  td.title-cell{max-width:420px; line-height:1.45;}
+  .pill{
+    display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:600; white-space:nowrap;
+  }
+  .pill-scopus{background:var(--teal-soft); color:var(--teal);}
+  .pill-none{background:#eee9d8; color:var(--slate);}
+  .pill-q1{background:#e2f3db; color:#3d8a2c;}
+  .pill-q2{background:#d6f0f9; color:#02749a;}
+  .pill-q3{background:#e6f6fc; color:#3d92ac;}
+  .pill-q4{background:#e6e6e7; color:var(--red-soft);}
+  .pill-published{background:#e2f3db; color:#3d8a2c;}
+  .pill-inpress{background:#d6f0f9; color:#02749a;}
+
+  .empty-row td{text-align:center; padding:40px; color:var(--slate); font-size:13px;}
+
+  footer{
+    text-align:center; padding:34px 20px 10px; color:var(--slate); font-size:12px;
+  }
+  footer .fline{margin-top:6px; opacity:.75;}
+
+  @media (max-width: 900px){
+    .hero-inner{grid-template-columns:1fr; text-align:center;}
+    .hero p{margin-left:auto; margin-right:auto;}
+    .hero-mini-stats{justify-content:center;}
+    .gauge-wrap{margin:0 auto;}
+    .highlights-grid{grid-template-columns:1fr;}
+    .secondary-grid{grid-template-columns:repeat(2,1fr);}
+    .hero h1{font-size:30px;}
+  }
+</style>
+</head>
+<body>
+
+<input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none">
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark-plate"><img class="brand-mark-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAB9AAAAInCAMAAAD3STJNAAADAFBMVEVHcEwAptdYWFoAptdNZG5YWFoAptcAptdYWFoAptcAptdYWFpfuEkAptdYWFpYWFoAptdYWFpYWFoAptdYWFpfuEkAptdYWFoAptdYWFpYWFoAptdYWFpfuEkAptdYWFpYWFoAptdYWFoAptdYWFpYWFpfuEkAptdYWFpYWFoAptdYWFpfuElfuEkAptdYWFpYWFoAptdYWFoAptdYWFpYWFpYWFoAptcAptdYWFoAptdYWFoAptcAptdYWFpYWFoAptcAptdYWFoAptdYWFpYWFoAptdfuEkAptdYWFpYWFpYWFoAptdYWFoAptcAptdYWFpYWFpYWFoAptcAptdYWFoAptdYWFpYWFpfuEkAptcAptdYWFpfuElYWFoAptdYWFpYWFoAptdYWFoAptdYWFpYWFoAptdYWFoAptdfuEkAptcAptdYWFpYWFoAptdYWFpYWFpfuEkAptdYWFoAptdYWFoAptcAptdYWFpYWFoAptdYWFoAptdYWFpYWFoAptdYWFpYWFoAptdYWFoAptdYWFpfuEkAptdYWFoAptdYWFoAptdYWFoAptcAptdYWFpYWFoAptdYWFoAptdYWFpYWFoAptdYWFpYWFoAptdYWFoAptdYWFpYWFoAptdYWFoAptdYWFoAptdYWFpfuEkAptdYWFpYWFoAptdYWFoAptdYWFpYWFpYWFpfuEkAptdYWFpfuElfuEkAptdYWFpfuElYWFoAptdYWFoAptdYWFpYWFoAptcAptdYWFoAptdYWFpfuEkAptdYWFoAptdYWFpYWFoAptcAptdYWFpYWFpYWFoAptdYWFoAptdYWFpYWFoAptdYWFoAptdYWFpYWFoAptcAptdYWFpYWFoAptdYWFpYWFoAptcAptdYWFpfuEkAptdYWFoAptcAptdYWFpYWFoAptcAptdYWFoAptdYWFoAptcAptdYWFpYWFpYWFpYWFoAptcAptdYWFpYWFoAptcAptdYWFpYWFpfuEkAptcAptdYWFpYWFqB1NRbAAAA/3RSTlMAAQEDAgMEBQQGBwYICAgJCgoLDAwPDw4REBETExQXFhcaGh0cHiEgICEiIyQlJSUnKSkrKywtLjEwMzM1NzY4Ojs8Pz5BQkRFREZHSElK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" alt="INCEIF University"></div>
+      <div class="brand-text">
+        <div class="eyebrow">INCEIF University · Publications Office</div>
+        <div class="name">Publication Dashboard</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <span class="file-name-tag" id="fileNameTag">Loading data…</span>
+      <button class="btn btn-ghost" id="resetBtn">Reset to sample</button>
+      <button class="btn btn-gold" id="uploadBtn">Upload data file</button>
+    </div>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="rosette-bg" style="background-image:url('data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2264%22%3E%3Cpolygon points=%2232,4 39,22 58,22 42,33 48,52 32,41 16,52 22,33 6,22 25,22%22 fill=%22none%22 stroke=%22%2300A6D7%22 stroke-width=%221%22/%3E%3C/svg%3E');"></div>
+  <div class="hero-inner">
+    <div>
+      <div class="hero-eyebrow">Academic Year 2026 · Progress Report</div>
+      <h1>Research output, tracked against the department's annual target.</h1>
+      <p>A live view of every article, book chapter, proceeding and other publication logged this year — indexing, quartile ranking and type, at a glance.</p>
+      <div class="hero-target-row">
+        Target for 2026:
+        <input type="number" id="targetInput" value="78" min="1">
+        publications
+      </div>
+      <div class="hero-kpi-row">
+        <span class="badge">h-index: <b>51</b></span>
+        <span class="badge">Citation: <b>1,042</b></span>
+      </div>
+      <div class="hero-mini-stats">
+        <div><div class="num" id="statPublished">–</div><div class="lbl">Published</div></div>
+        <div><div class="num" id="statInPress">–</div><div class="lbl">In Press</div></div>
+        <div><div class="num" id="statRemaining">–</div><div class="lbl">Remaining to target</div></div>
+      </div>
+    </div>
+    <div class="gauge-wrap">
+      <div class="gauge">
+        <svg viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="86" fill="none" stroke="rgba(242,236,224,.14)" stroke-width="14"/>
+          <circle id="gaugeArc" cx="100" cy="100" r="86" fill="none" stroke="#5FB849" stroke-width="14"
+            stroke-linecap="round" stroke-dasharray="540" stroke-dashoffset="540"/>
+        </svg>
+        <div class="gauge-center">
+          <div class="count" id="gaugeCount">–</div>
+          <div class="of" id="gaugeOf">of 78 target</div>
+          <div class="pct" id="gaugePct">–%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="section" id="highlightsSection">
+    <div class="section-head">
+      <div>
+        <div class="section-tag">Highlighted</div>
+        <h2>Citation overview, publication type &amp; quartile</h2>
+        <div class="sub">The three dimensions the department tracks most closely.</div>
+      </div>
+    </div>
+    <div class="highlights-grid">
+      <div class="card">
+        <h3>Citation Overview</h3>
+        <div class="card-sub">Publications and citations, by year</div>
+        <div class="card-chart chart-citation"><canvas id="chartCitation"></canvas></div>
+        <div class="legend-list" id="legendCitation"></div>
+      </div>
+      <div class="card">
+        <h3>Publication Type</h3>
+        <div class="card-sub">Articles, book chapters, proceedings &amp; more</div>
+        <div class="card-chart"><canvas id="chartType"></canvas></div>
+        <div class="legend-list" id="legendType"></div>
+      </div>
+      <div class="card">
+        <h3>Scopus Publication Type</h3>
+        <div class="card-sub">Publication type among Scopus-indexed records</div>
+        <div class="card-chart"><canvas id="chartScopusType"></canvas></div>
+        <div class="legend-list" id="legendScopusType"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="otherIndexSection">
+    <div class="section-head">
+      <div>
+        <div class="section-tag">Additional indexing</div>
+        <h2>Scopus, Q1, Q2, ABDC, WOS, ERA &amp; MyCite coverage</h2>
+        <div class="sub">Indexed/listed coverage among Article-type records only.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-sub" id="indexCoverageSub">Among Article records</div>
+      <div class="card-chart" style="height:260px;"><canvas id="chartIndexCoverage"></canvas></div>
+      <div class="legend-list" id="legendIndexCoverage"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div><h2>At a glance</h2><div class="sub">Status and collaboration scope across all logged records.</div></div>
+    </div>
+    <div class="secondary-grid" id="secondaryGrid"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div><h2>All publications</h2><div class="sub" id="tableCountSub">–</div></div>
+    </div>
+    <div class="table-controls">
+      <input type="text" id="searchInput" placeholder="Search title, publisher, author...">
+      <select id="filterScopus"><option value="">All Publications</option></select>
+      <select id="filterType"><option value="">All types</option></select>
+      <select id="filterQuartile"><option value="">All quartiles</option></select>
+      <select id="filterStatus"><option value="">All statuses</option></select>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>No.</th>
+            <th>Title</th>
+            <th>Scopus</th>
+            <th>Quartile</th>
+            <th>Type</th>
+            <th>Publisher / Platform</th>
+            <th>Joint</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    INCEIF University · Publications Office — internal progress dashboard.
+    <div class="fline">Data loads automatically from <span class="mono">publications.xlsx</span> in this folder. Replace that file and refresh the page to update every chart — or use "Upload data file" to preview a file without replacing it.</div>
+  </footer>
+</div>
+
+<script id="seed-data" type="application/json">[{"no": 1, "title": "Abdel Mohsin, M. I.; Zulkarnaini, S. M.; Fakhrunnas, F. and Muneeb, D. A. (2026), \"The SAMI-SD Model: A Holistic Framework for Measuring Maqasid Al-Shariah Compliance and Sustainable Development Outcomes, International Journal of Management and Applied Research, Vol. 13, No. 1, pp. 21-37. https://doi.org/10.18646/2056.131.26-002", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "International", "coe": "-", "type": "Article", "publisher": "New Millennium Discoveries, UK", "status": "Published"}, {"no": 2, "title": "الصناديق الاستثمارية الإسلامية المستدامة: بين الالتزام الشرعي وتحقيق الاستدامة المالية S, Younes., S, Abdul Majid., Sustainable Islamic Investment Funds: Between Shariah Compliance and Achieving Financial Sustainability. (2026). Journal of Fatwa Management and Research, 31(1), 289-317. https://doi.org/10.33102/jfatwa.vol31no1.752", "scopus": "SCOPUS", "quartile": "Q1", "abdc": "-", "wos": "-", "era": "-", "mycite": "MyCite", "joint": "Local", "coe": "-", "type": "Article", "publisher": "USIM Press", "status": "Published"}, {"no": 3, "title": "Ramadhani, I., Mahomed, Z., (2026), Harmonizing the halal approach for food and beverage certification: case of Indonesia and Malaysia. SN Social Sciences, 6, 76. https://doi.org/10.1007/s43545-026-01362-3", "scopus": "SCOPUS", "quartile": "Q2", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "Local", "coe": "-", "type": "Article", "publisher": "SpringerLink", "status": "Published"}, {"no": 4, "title": "Anwer, Z., Azmi, W., Hassan, M.K., & Ramadili Mohd, S., (2026), Is Default Risk Contagious? Evidence from Global Energy Leaders and Environmentally Conscious Energy Firms.Computational Economics, 67, 47–81. https://doi.org/10.1007/s10614-024-10631-3", "scopus": "SCOPUS", "quartile": "Q1", "abdc": "B", "wos": "SSCI", "era": "ERA", "mycite": "-", "joint": "International", "coe": "-", "type": "Article", "publisher": "SpringerLink", "status": "Published"}, {"no": 5, "title": "Ahmed, M., Hossain, Md. Mahabbat, & Tabet, I. (2026). Incorporating sustainability agenda in ṣukūk: Evidence from Bangladesh. International Journal of Islamic Finance and Sustainable Development, 18,1, 22–42. https://doi.org/10.55188/ijifsd.v18i1.1189 ", "scopus": "SCOPUS", "quartile": "Q2", "abdc": "-", "wos": "ESCI", "era": "-", "mycite": "MyCite", "joint": "International", "coe": "-", "type": "Article", "publisher": "INCEIF University", "status": "Published"}, {"no": 6, "title": "Habibullah, M. S., Din, B. H., Subramaniam, Y., Hamid, B. A., Abd Rahman, M. D., & Adzman, A. I. (2026). DOES SHADOW ECONOMY WIDENS OR NARROWS THE INCOME INEQUALITY IN MALAYSIA? SOME ROBUST RESULTS. International Journal of Economics and Finance Studies, 18(1), 42-69.", "scopus": "SCOPUS", "quartile": "Q2", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "Local", "coe": "-", "type": "Article", "publisher": "Social Sciences Research Society", "status": "Published"}, {"no": 7, "title": "Hasan, A. N., Ibrahim, M., & Salim, K. (2026). Financial inclusion and macroeconomic outcomes in developing economies: pre-COVID insights on growth, stability, and inequality. Future Business Journal, 12(1), 30, https://doi.org/10.1186/s43093-026-00729-5", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "ESCI", "era": "-", "mycite": "-", "joint": "Local", "coe": "-", "type": "Article", "publisher": "SpringerLink", "status": "Published"}, {"no": 8, "title": "Nashraa, A., Hashim, F. H., Balti, K., Gbla, A., Kalong, M. H. F. H., & Nizam, I. (2026). STRATEGIC ANALYSIS CASE STUDY: IHH HEALTHCARE BERHAD. Journal of Business Management and Accounting, 16(1), 103-137. https://doi.org/10.32890/jbma2026.16.1.6", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "MyCite", "joint": "Local", "coe": "-", "type": "Article", "publisher": "Universiti Utara Malaysia", "status": "Published"}, {"no": 9, "title": "Muneeza, A., Daud, D., & Falah, A. (2026). Digital waqf in community sustainability: An Expectation-Confirmation Technology Model (ECTM) approach. BELGI: Journal of Islamic Business and Decision Sciences, 1(1), 23-45. https://belgifoods.com/bjs/index.php/journal/article/view/6", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "International", "coe": "-", "type": "Article", "publisher": "STIS Al Wafa, Indonesia,", "status": "Published"}, {"no": 10, "title": "Ali, A. F. M., Zal, W. A., Johari, F., Abd Hamid, B., & Zirwatul, N. (2026). The Concept of Benefidonors in Sustaining Community Development through Individual Member Waqf Beneficiaries. Falah: Jurnal Ekonomi Syariah, 11(1), 43-66. https://doi.org/10.22219/jes.v11i1.43478", "scopus": "SCOPUS", "quartile": "Q1", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "Local", "coe": "-", "type": "Article", "publisher": "University of Muhammadiyah Malang", "status": "Published"}, {"no": 11, "title": "Ahmed MU, Hossain MM, Khadem MARK (2026), \"Issues in the application of HPSM by Islamic banks in Bangladesh\". Qualitative Research in Financial Markets, Vol. 18 No. 3 pp. 690–708, doi: https://doi.org/10.1108/QRFM-05-2024-0121", "scopus": "SCOPUS", "quartile": "Q1", "abdc": "B", "wos": "ESCI", "era": "ERA", "mycite": "-", "joint": "International", "coe": "-", "type": "Article", "publisher": "Emerald Insight", "status": "Published"}, {"no": 12, "title": "Ibrahim, M. , and X.H. Nghiem . 2026. Commodity Prices and Inflation in Indonesia: Does the Pass-Through Really Matter?. Australian Economic Paper, 65, 2, 149–163. https://doi.org/10.1111/1467-8454.70018.", "scopus": "SCOPUS", "quartile": "Q2", "abdc": "B", "wos": "SSCI", "era": "ERA", "mycite": "-", "joint": "International", "coe": "-", "type": "Article", "publisher": "Wiley Online Library", "status": "Published"}, {"no": 13, "title": "Mantai MM, Ismail I, Bacha OI (2026), \"Exploring the influence of micro, small and medium enterprise financing and dual banking stability: evidence from Saudi Arabia\". Journal of Entrepreneurship in Emerging Economies, Vol. 18 No. 5 pp. 1293–1320, doi: https://doi.org/10.1108/JEEE-09-2025-0563", "scopus": "SCOPUS", "quartile": "Q1", "abdc": "B", "wos": "ESCI", "era": "ERA", "mycite": "-", "joint": "Local", "coe": "-", "type": "Article", "publisher": "Emerald Insight", "status": "Published"}, {"no": 14, "title": "Abdel Mohsin, M. I.; Abdul Rashid, M. A. and Mohd Zulkarnaini, S.(2026), \"Beyond GDP: Toward A Falah Development Index (FalahDI) Framework For Measuring Prosperity In Islamic Economics\", International Journal of Management and Applied Research, Vol. 13, No. 2, pp. 76-87. https://doi.org/10.18646/2056.132.26-005", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "Local", "coe": "ISF", "type": "Article", "publisher": "New Millennium Discoveries, UK", "status": "Published"}, {"no": 15, "title": "Fakhrunnas, F., Kenc, T., & Zhang, H. (2025). ESG Commitment and Bank's Default Risk in Emerging and Developing Countries: Does Islamic Bank Matter?. Journal of Islamic Monetary Economics and Finance, 11(4), 713-742. https://doi.org/10.21098/jimf.v11i4.2789.", "scopus": "SCOPUS", "quartile": "Q2", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "International", "coe": "-", "type": "Article", "publisher": "Bank Indonesia Institute", "status": "Published"}, {"no": 16, "title": "Abdullah , S., Rahim, H. A., Kassim , H., Bakar, A. A., Shahriman, W. A. M. W., & Seman, A. C. (2026). AN INTEGRATED ISLAMIC SOCIAL ENTREPRENEURSHIP MODEL FOR EMPOWERING PERSONS WITH DISABILITIES IN MALAYSIA. ADVANCED INTERNATIONAL JOURNAL OF BUSINESS, ENTREPRENEURSHIP AND SME’S (AIJBES), 8(28), 372–396. https://doi.org/10.35631/AIJBES.828025", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "MyCite", "joint": "Local", "coe": "ISF", "type": "Article", "publisher": "Global Academic Excellence (M) Sdn Bhd (GAE) ", "status": "Published"}, {"no": 17, "title": "Soualhi, Y. (in press, 2026).  Algeria's Islamic Interbank Money Market: Legal Necessity and Liquidity Instruments under Regulation No. 25-13 (2025). The Manchester School.", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "SSCI", "era": "ERA", "mycite": "-", "joint": "-", "coe": "-", "type": "Article", "publisher": "Wiley Online Library", "status": "In Press"}, {"no": 18, "title": "Ma, Y., & Mahomed, Z. (in press, 2026).  Sukuk-Based Multi-Dimensional Financing for Urban Village renewal in China: Advancing Risk-Sharing and Inclusive Housing Models. International Journal of Islamic and Middle Eastern Finance and Management.", "scopus": "SCOPUS", "quartile": "Q1", "abdc": "B", "wos": "SSCI", "era": "ERA", "mycite": "-", "joint": "Local", "coe": "-", "type": "Article", "publisher": "Emerald Insight", "status": "In Press"}, {"no": 19, "title": "Ma, Y., & Abdul Hamid, B. (in press, 2026).  Strategic Coordination in the Halal Economy: A Cross Regional Study of Seven Muslim-Minority Emerging Markets. International Journal of Emerging Markets.", "scopus": "SCOPUS", "quartile": "Q1", "abdc": "B", "wos": "SSCI", "era": "ERA", "mycite": "-", "joint": "Local", "coe": "-", "type": "Article", "publisher": "Emerald Insight", "status": "In Press"}, {"no": 20, "title": "Ahmed M, Rabbani AA (2026), \"Balancing Shariah compliance and operational efficiency: core banking system choices for Islamic banking windows in Bangladesh\". Journal of Islamic Accounting and Business Research, Vol. ahead-of-print No. ahead-of-print. https://doi.org/10.1108/JIABR-09-2025-0651", "scopus": "SCOPUS", "quartile": "Q2", "abdc": "C", "wos": "ESCI", "era": "ERA", "mycite": "-", "joint": "International", "coe": "-", "type": "Article", "publisher": "Emerald Insight", "status": "In Press"}, {"no": 21, "title": "Bin Abd Samad MF, Muneeza A (2026;), \"Anti-corruption governance in Islamic banking: lessons from Section 17A corporate liability in Malaysia\". International Journal of Ethics and Systems, Vol. ahead-of-print No. ahead-of-print. https://doi.org/10.1108/IJOES-02-2026-0112", "scopus": "SCOPUS", "quartile": "Q1", "abdc": "C", "wos": "ESCI", "era": "-", "mycite": "-", "joint": "Local", "coe": "-", "type": "Article", "publisher": "Emerald Insight", "status": "In Press"}, {"no": 22, "title": "Djafri, F. (in press, 2026).  Profit Distribution Mechanisms for Investment Accounts in Malaysian Islamic Banks: An Analytical Study in Light of Shariah and Accounting Standards. Journal of King Abdulaziz University: Islamic Economics.", "scopus": "SCOPUS", "quartile": "Q3", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "Local", "coe": "-", "type": "Article", "publisher": "King Abdulaziz University", "status": "In Press"}, {"no": 23, "title": "Mohamed, I., & Muneeza, A. (in press, 2026).  Enhancing Debt Recovery Process of Islamic Banks Using a Ju'alah Based Decentralised Model. Journal of Islamic Accounting and Business Research", "scopus": "SCOPUS", "quartile": "Q2", "abdc": "C", "wos": "ESCI", "era": "ERA", "mycite": "-", "joint": "Local", "coe": "-", "type": "Article", "publisher": "Emerald Insight", "status": "In Press"}, {"no": 24, "title": "Shuaibu, B.L., Muneeza, A. (2026). Applying Psychological Empowerment Theory to Examine Participatory Dynamics in Islamic Microfinance Among Female Small Business Owners. In: El Khoury, R. (eds) Business Models of the Future. Studies in Systems, Decision and Control, vol 238. Springer, Cham. https://doi.org/10.1007/978-3-031-85398-2_4", "scopus": "SCOPUS", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "Local", "coe": "-", "type": "Book Chapter", "publisher": "-", "status": "Published"}, {"no": 25, "title": "Obaid Hasan Saleh, A., & Soualhi, Y. (2026). Maqasid al-Shariah, Islamic finance, and climate action. In M. Ma’Sum Billah, R. Haron, R. Hassan, S. M. M. Syed Azman, & A. N. Billah (Eds.), Islamic finance and climate action: Ethics, environmental stewardship and sustainability. Routledge. https://doi.org/10.4324/9781003570936-5", "scopus": "SCOPUS", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "Local", "coe": "-", "type": "Book Chapter", "publisher": "-", "status": "Published"}, {"no": 26, "title": "Muneeza, A. (2026). Pioneering Sukuk in The Maldives: Navigating Legal and Market Challenges,  Islamic Finance & Governance in Action: A Case based Learning Approach. Malaysia: UUM & INCEIF. ", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "Local", "coe": "-", "type": "Book Chapter", "publisher": "-", "status": "Published"}, {"no": 27, "title": "Muneeza, A. (2026). Formulating Shariah Screening Criteria for Whitelisted Companies,  Islamic Finance & Governance in Action: A Case based Learning Approach. Malaysia: UUM & INCEIF. ISBN: 9789671103098", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "Local", "coe": "-", "type": "Book Chapter", "publisher": "-", "status": "Published"}, {"no": 28, "title": "Muneeza, A., & Mohsin, M. (2026). Halal Deception: Unveiling Malaysia's Meat Scandal,  Islamic Finance & Governance in Action: A Case based Learning Approach. Malaysia: UUM & INCEIF. ISBN: 9789671103098", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "Local", "coe": "-", "type": "Book Chapter", "publisher": "-", "status": "Published"}, {"no": 29, "title": "Muneeza, A., & Mohsin, M. (2026). Fraudulent Pilgrimages: Can State Intervention Prevent Another Harmony Pilgrimage Group Scandal?,  Islamic Finance & Governance in Action: A Case based Learning Approach. Malaysia: UUM & INCEIF. ISBN: 9789671103098", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "Local", "coe": "-", "type": "Book Chapter", "publisher": "-", "status": "Published"}, {"no": 30, "title": "Muneeza, A. (2026). Innovative Mudharabah Financing in Azaria: Addressing Oil Crisis Through Islamic Treasury Bills,  Islamic Finance & Governance in Action: A Case based Learning Approach. Malaysia: UUM & INCEIF. ISBN: 9789671103098", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "Local", "coe": "-", "type": "Book Chapter", "publisher": "-", "status": "Published"}, {"no": 31, "title": "Muneeza, A. (2026). Establishing A Tabung Haji Model in a Challenging Environment,  Islamic Finance & Governance in Action: A Case based Learning Approach. Malaysia: UUM & INCEIF. ISBN: 9789671103098", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "Local", "coe": "-", "type": "Book Chapter", "publisher": "-", "status": "Published"}, {"no": 32, "title": "Devi, A., & Abdul Hamid, B. (2026). Digital Finance Inclusion Patterns and Adoption Gaps among Indonesian MSMEs. In Pascal Stiefenhover (Ed.), Financial Literacy in the Age of Artificial Intelligence: Connecting Knowledge, Practical Application and Sustainability. SpringerLink. ISBN: 978-3-032-29187-5", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "Local", "coe": "-", "type": "Book Chapter", "publisher": "-", "status": "Published"}, {"no": 33, "title": "Shuaibu, B. L., & Muneeza, A. (2026). The Effect of Islamic Microfinance Institutional Structure on Financial Inclusion Amongst Women. In Sustainable Responsible Practices in Technology and Business for Society 5.0: Guideline for Next Generation, Volume 2 (pp. 240-250). Cham: Springer Nature Switzerland.", "scopus": "SCOPUS", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "Local", "coe": "-", "type": "Book Chapter", "publisher": "-", "status": "Published"}, {"no": 34, "title": "A. Mohsin, M. (2026). Can state intervention prevent another harmony pilgrimage group scandal?. Islamic Finance and Governance in Action: A Case-Based Learning Approach. Malaysia: UUM. ", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "Local", "coe": "-", "type": "Book Chapter", "publisher": "-", "status": "Published"}, {"no": 35, "title": "A. Mohsin, M. (2026). Can Islamic Spiritual Principles Guide Financial Choices? Ahmed's Quest for Answers,  Islamic Finance and Governance in Action: A Case-Based Learning Approach. Malaysia: UUM. ", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "Local", "coe": "-", "type": "Book Chapter", "publisher": "-", "status": "Published"}, {"no": 36, "title": "Rahman, M. P., Musari, K., Kilinc-Ata, N., & Mahsyar, N. M. (2026). Funding Energy Transition with Islamic Finance in Muslim-Majority Countries: Evidence from ASEAN, Central Asia, and the Maghreb Region. In ISLAMIC FINANCE, ENERGY TRANSITION AND SUSTAINABILITY (pp. 135-165). https://doi.org/10.1142/9789819822003_0005", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "International", "coe": "-", "type": "Book Chapter", "publisher": "-", "status": "Published"}, {"no": 37, "title": "Rahman, M. (2026).  Embracing Quantum Computing for Sustainable Finance: The Malaysian Case.   Values for Impact: Ethical Finance, Innovation and Sustainable Growth, Sarajevo, June 18-19, 2025", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "Local", "coe": "-", "type": "Proceeding", "publisher": "-", "status": "Published"}, {"no": 38, "title": "Ahmed, M., & Nayn, Z., Halal economy: The next frontier for Bangladesh's economic growth, The Daily Star, 1 February 2026.", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "-", "coe": "-", "type": "Other Publication", "publisher": "-", "status": "Published"}, {"no": 39, "title": "Ahmed, M., Islamic banks merger: Depositors deserve transparency in Shariah decisions, Islamic Finance News, Volume23.Issue02", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "-", "coe": "-", "type": "Other Publication", "publisher": "-", "status": "Published"}, {"no": 40, "title": "Nizam, I. (2026), ‘Harnessing AI for Zakat: Building a Real-Time Needs Matching System’, IF HUB, Issue 1, \nJanuary, pp. 6–9.", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "-", "coe": "-", "type": "Other Publication", "publisher": "-", "status": "Published"}, {"no": 41, "title": "Zhang, H., Malaysia's Mental Health Crisis: The Promise of a Waqf-Based Solution, IF Hub, Issue 1, 2026 (January), pp. 10–15", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "-", "coe": "-", "type": "Other Publication", "publisher": "-", "status": "Published"}, {"no": 42, "title": "Muneeza, A., (2026). Reefside Sukuk Ijarah now live on Viyana Platform, Islamic Finance News, Volume23.Issue07", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "-", "coe": "-", "type": "Other Publication", "publisher": "-", "status": "Published"}, {"no": 43, "title": "Muneeza, A., (2026), Financial abuse: the hidden crime we must recognise, Free Malaysia Today.   ", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "-", "coe": "-", "type": "Other Publication", "publisher": "-", "status": "Published"}, {"no": 44, "title": "Muneeza, A., (2026), Financial abuse: breaking the silence, building solutions, Free Malaysia Today.  ", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "-", "coe": "-", "type": "Other Publication", "publisher": "-", "status": "Published"}, {"no": 45, "title": "Ahmed, M., (2026), Beyond the bond: Mezbah Uddin Ahmed on sukuk, Shariah, and the future of Islamic finance. AlHuda Today", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "-", "coe": "-", "type": "Other Publication", "publisher": "-", "status": "Published"}, {"no": 46, "title": "Muneeza, A., (2026),Financial abuse: why Malaysia must expand its regulatory definition , Free Malaysia Today.  ", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "-", "coe": "-", "type": "Other Publication", "publisher": "-", "status": "Published"}, {"no": 47, "title": "Muneeza, A., (2026). Maldives: Zakat Asnaf Card Launch Transforms Welfare Services, Islamic Finance News, Volume23.Issue13", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "-", "coe": "-", "type": "Other Publication", "publisher": "-", "status": "Published"}, {"no": 48, "title": "Ahmed, M., (2026), Who should pay for Islamic banks' bad investments?, The Daily Star (13 April 2026)", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "-", "coe": "-", "type": "Other Publication", "publisher": "-", "status": "Published"}, {"no": 49, "title": "Muneeza, A., (2026). Maldives’ Islamic finance sector surges in 2025, Islamic Finance News, Volume23.Issue21", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "-", "coe": "-", "type": "Other Publication", "publisher": "-", "status": "Published"}, {"no": 50, "title": "Muneeza, A., (2026). Maldives: Are Islamic windows becoming structurally outdated?, Islamic Finance News, Volume23.Issue24", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "-", "coe": "-", "type": "Other Publication", "publisher": "-", "status": "Published"}, {"no": 51, "title": "Muneeza, A., (2026). Amana Takaful Maldives eyes Central Asia expansions, Islamic Finance News, Volume23.Issue25", "scopus": "-", "quartile": "-", "abdc": "-", "wos": "-", "era": "-", "mycite": "-", "joint": "-", "coe": "-", "type": "Other Publication", "publisher": "-", "status": "Published"}]</script>
+
+<script>
+/* ---------------------------------------------------------
+   State
+--------------------------------------------------------- */
+let RECORDS = JSON.parse(document.getElementById('seed-data').textContent);
+let TARGET = 78;
+let charts = { type:null, scopusType:null, indexCoverage:null, citation:null };
+
+/* Citation Overview.csv aggregation, keyed by Publication Year */
+let CITATION_YEARS = [];
+let CITATION_BY_YEAR = {};
+
+const COLORS = {
+  gold:'#5FB849', goldSoft:'#8ED17A', navy:'#073B4C', teal:'#00A6D7',
+  tealSoft:'#8DD8EE', slate:'#9aa3ad', red:'#3c3c3e', olive:'#3d8a2c', sand:'#8DD8EE'
+};
+const TYPE_PALETTE = ['#00A6D7','#5FB849','#58585A','#8DD8EE','#A9D18E','#073B4C'];
+
+/* Types counted toward the Scopus-indexing KPI */
+const SCOPUS_ELIGIBLE_TYPES = ['article','book chapter','proceeding'];
+
+/* Palettes / preferred ordering for the secondary indexing charts */
+const NOT_INDEXED_COLOR = '#e8e2cc';
+const INDEX_COVERAGE_FIELDS = [
+  { label:'Scopus', color:'#00A6D7', test:r => isScopus(r.scopus) },
+  { label:'Q1',     color:'#5FB849', test:r => r.quartile === 'Q1' },
+  { label:'Q2',     color:'#8ED17A', test:r => r.quartile === 'Q2' },
+  { label:'ABDC',   color:'#073B4C', test:r => r.abdc && r.abdc !== '-' },
+  { label:'WOS',    color:'#02749A', test:r => r.wos && r.wos !== '-' },
+  { label:'ERA',    color:'#3d8a2c', test:r => r.era && r.era !== '-' },
+  { label:'MyCite', color:'#58585A', test:r => r.mycite && r.mycite !== '-' },
+];
+
+/* ---------------------------------------------------------
+   Header matching — lets an uploaded file use slightly
+   different casing / spacing and still map correctly
+--------------------------------------------------------- */
+function normHeader(h){
+  return String(h||'').toLowerCase().replace(/[^a-z]/g,'');
+}
+const HEADER_MAP = {
+  no: ['no','number'],
+  title: ['title'],
+  scopus: ['scopusindex','scopus'],
+  quartile: ['journalquartile','quartile'],
+  abdc: ['abdc'],
+  wos: ['wos'],
+  era: ['era'],
+  mycite: ['mycite'],
+  joint: ['jointpublication','joint'],
+  coe: ['coepublication','coe'],
+  type: ['publicatintype','publicationtype','type'],
+  publisher: ['platformpublisher','platform','publisher'],
+  status: ['publicationstatus','status']
+};
+
+function mapRowsFromSheet(rows){
+  if(!rows.length) return [];
+  const rawHeaders = rows[0];
+  const normed = rawHeaders.map(normHeader);
+  const colIndex = {};
+  Object.keys(HEADER_MAP).forEach(key=>{
+    const candidates = HEADER_MAP[key];
+    let idx = -1;
+    for(const c of candidates){
+      idx = normed.findIndex(n => n === c);
+      if(idx !== -1) break;
+    }
+    if(idx === -1){
+      idx = normed.findIndex(n => candidates.some(c => n.includes(c)));
+    }
+    colIndex[key] = idx;
+  });
+
+  const out = [];
+  for(let i=1;i<rows.length;i++){
+    const r = rows[i];
+    if(!r || r.every(v => v === undefined || v === null || v === '')) continue;
+    const get = key => {
+      const idx = colIndex[key];
+      if(idx === -1 || idx === undefined) return '-';
+      const v = r[idx];
+      return (v === undefined || v === null || v === '') ? '-' : String(v).trim();
+    };
+    if(colIndex.title === -1) continue;
+    const title = get('title');
+    if(!title || title === '-') continue;
+    out.push({
+      no: colIndex.no !== -1 ? (r[colIndex.no] ?? (i)) : i,
+      title, scopus:get('scopus'), quartile:get('quartile'), abdc:get('abdc'),
+      wos:get('wos'), era:get('era'), mycite:get('mycite'), joint:get('joint'),
+      coe:get('coe'), type:get('type'), publisher:get('publisher'), status:get('status')
+    });
+  }
+  return out;
+}
+
+/* ---------------------------------------------------------
+   Aggregation helpers
+--------------------------------------------------------- */
+function countBy(records, field, normalize){
+  const map = {};
+  records.forEach(r=>{
+    let v = r[field] ?? '-';
+    if(normalize) v = normalize(v);
+    map[v] = (map[v]||0)+1;
+  });
+  return map;
+}
+function isScopus(v){ return String(v).toUpperCase().includes('SCOPUS'); }
+
+/* ---------------------------------------------------------
+   Rendering
+--------------------------------------------------------- */
+function destroyChart(key){ if(charts[key]){ charts[key].destroy(); charts[key]=null; } }
+
+function renderGauge(published_plus_inpress){
+  const total = RECORDS.length;
+  const pct = TARGET > 0 ? Math.min(total/TARGET,1) : 0;
+  const circumference = 2*Math.PI*86;
+  const arc = document.getElementById('gaugeArc');
+  arc.setAttribute('stroke-dasharray', circumference.toFixed(1));
+  arc.setAttribute('stroke-dashoffset', (circumference*(1-pct)).toFixed(1));
+  document.getElementById('gaugeCount').textContent = total;
+  document.getElementById('gaugeOf').textContent = 'of ' + TARGET + ' target';
+  document.getElementById('gaugePct').textContent = Math.round(pct*100) + '%';
+}
+
+function renderHeroStats(){
+  const published = RECORDS.filter(r => String(r.status).toLowerCase() === 'published').length;
+  const inPress = RECORDS.filter(r => String(r.status).toLowerCase().includes('press')).length;
+  const remaining = Math.max(TARGET - RECORDS.length, 0);
+  document.getElementById('statPublished').textContent = published;
+  document.getElementById('statInPress').textContent = inPress;
+  document.getElementById('statRemaining').textContent = remaining;
+  renderGauge();
+}
+
+/* Draws a total (and optional label) in the hole of a doughnut chart */
+const centerTextPlugin = {
+  id: 'centerText',
+  afterDraw(chart){
+    const opts = chart.config.options.plugins.centerText;
+    if(!opts || !opts.display) return;
+    const { ctx, chartArea } = chart;
+    const cx = (chartArea.left + chartArea.right) / 2;
+    const cy = (chartArea.top + chartArea.bottom) / 2;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#1c1c1e';
+    ctx.font = "700 28px 'IBM Plex Mono', monospace";
+    ctx.fillText(opts.text, cx, cy + (opts.subtext ? -9 : 0));
+    if(opts.subtext){
+      ctx.fillStyle = '#58585A';
+      ctx.font = "600 11px 'Inter', sans-serif";
+      ctx.fillText(opts.subtext, cx, cy + 13);
+    }
+    ctx.restore();
+  }
+};
+Chart.register(centerTextPlugin);
+
+function donutChart(canvasId, labels, data, colors, total, centerText){
+  const denom = total || RECORDS.length || 1;
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  return new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data, backgroundColor:colors, borderWidth:2, borderColor:'#fffdf8' }] },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'68%',
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{
+        label:(ctx)=> ` ${ctx.label}: ${ctx.parsed} (${((ctx.parsed/denom)*100).toFixed(0)}%)`
+      }}, centerText: centerText || { display:false } }
+    }
+  });
+}
+
+function barChart(canvasId, labels, data, colors){
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  return new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[{ data, backgroundColor:colors, borderRadius:6, maxBarThickness:34 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false, indexAxis:'y',
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{
+        label:(ctx)=> ` ${ctx.parsed.x} (${((ctx.parsed.x/RECORDS.length)*100).toFixed(0)}%)`
+      }}},
+      scales:{ x:{ grid:{color:'#eee9d8'}, ticks:{font:{size:11}} }, y:{ grid:{display:false}, ticks:{font:{size:11.5}} } }
+    }
+  });
+}
+
+function verticalBarChart(canvasId, labels, data, colors, total){
+  const denom = total || RECORDS.length || 1;
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  return new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[{ data, backgroundColor:colors, borderRadius:6, maxBarThickness:44 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{
+        label:(ctx)=> ` ${ctx.parsed.y} (${((ctx.parsed.y/denom)*100).toFixed(0)}%)`
+      }}},
+      scales:{ y:{ beginAtZero:true, grid:{color:'#eee9d8'}, ticks:{font:{size:11}, precision:0} }, x:{ grid:{display:false}, ticks:{font:{size:11.5}} } }
+    }
+  });
+}
+
+function renderLegend(elId, entries, colorFn){
+  const el = document.getElementById(elId);
+  el.innerHTML = entries.map(([label,count])=>`
+    <div class="legend-row">
+      <div class="legend-left">
+        <span class="swatch" style="background:${colorFn(label)}"></span>
+        <span class="legend-name">${label}</span>
+      </div>
+      <span class="legend-val">${count}</span>
+    </div>`).join('');
+}
+
+/* ---------------------------------------------------------
+   Citation Overview.csv parsing
+   -----------------------------------------------------------
+   Scopus "citation overview" exports start with a few free-text
+   lines (document count, h-index note), then a header row whose
+   first cell is "Publication Year" followed by metadata columns
+   and one column per citation year (<2021, 2021, 2022, ...).
+   We only need column A (Publication Year) to bucket documents,
+   and the sum of every column after F (the per-document citation
+   counts) as that document's total citations to date.
+--------------------------------------------------------- */
+function parseCSVText(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(inQuotes){
+      if(c === '"'){
+        if(text[i+1] === '"'){ field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else {
+      if(c === '"') inQuotes = true;
+      else if(c === ','){ row.push(field); field=''; }
+      else if(c === '\r'){ /* ignore, \n handles the newline */ }
+      else if(c === '\n'){ row.push(field); rows.push(row); row=[]; field=''; }
+      else field += c;
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows;
+}
+
+function buildCitationAggregation(text){
+  const rows = parseCSVText(text);
+  const headerIdx = rows.findIndex(r => String(r[0]||'').trim().toLowerCase() === 'publication year');
+  const byYear = {};
+  if(headerIdx === -1) return { years: [], byYear };
+  for(let i = headerIdx + 1; i < rows.length; i++){
+    const r = rows[i];
+    if(!r || !r[0] || !String(r[0]).trim()) continue;
+    const year = String(r[0]).trim();
+    if(!/^\d{4}$/.test(year)) continue;
+    const citeSum = r.slice(6).reduce((sum, v) => {
+      const n = parseInt(String(v).trim(), 10);
+      return sum + (isNaN(n) ? 0 : n);
+    }, 0);
+    if(!byYear[year]) byYear[year] = { publications: 0, citations: 0 };
+    byYear[year].publications += 1;
+    byYear[year].citations += citeSum;
+  }
+  const years = Object.keys(byYear).sort((a,b)=> a - b);
+  return { years, byYear };
+}
+
+/* Draws each bar's total publication count above the bar */
+const barTotalLabelPlugin = {
+  id: 'barTotalLabel',
+  afterDatasetsDraw(chart){
+    const meta = chart.getDatasetMeta(0);
+    if(!meta || meta.hidden) return;
+    const { ctx } = chart;
+    ctx.save();
+    ctx.fillStyle = '#1c1c1e';
+    ctx.font = "700 10px 'IBM Plex Mono', monospace";
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    meta.data.forEach((bar, idx) => {
+      const val = chart.data.datasets[0].data[idx];
+      if(val === undefined || val === null) return;
+      ctx.fillText(String(val), bar.x, bar.y - 4);
+    });
+    ctx.restore();
+  }
+};
+
+function citationChart(canvasId, labels, pubData, citeData){
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  return new Chart(ctx, {
+    data: {
+      labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Publications',
+          data: pubData,
+          backgroundColor: COLORS.teal,
+          borderRadius: 5,
+          maxBarThickness: 26,
+          order: 2,
+          yAxisID: 'y'
+        },
+        {
+          type: 'line',
+          label: 'Citations',
+          data: citeData,
+          borderColor: COLORS.gold,
+          backgroundColor: COLORS.gold,
+          pointBackgroundColor: COLORS.gold,
+          pointRadius: 3,
+          pointHoverRadius: 4,
+          borderWidth: 2,
+          tension: 0.3,
+          order: 1,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { top: 16 } },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: {
+          label: (c) => ` ${c.dataset.label}: ${c.parsed.y.toLocaleString()}`
+        }}
+      },
+      scales: {
+        x: { grid: { display:false }, ticks: { font:{size:10}, maxRotation:0, autoSkip:true } },
+        y: { beginAtZero:true, grid:{color:'#eee9d8'}, ticks:{precision:0, font:{size:10}}, title:{display:true, text:'Publications', font:{size:9.5}} },
+        y1: { beginAtZero:true, position:'right', grid:{display:false}, ticks:{precision:0, font:{size:10}}, title:{display:true, text:'Citations', font:{size:9.5}} }
+      }
+    },
+    plugins: [barTotalLabelPlugin]
+  });
+}
+
+function renderCitationCard(){
+  destroyChart('citation');
+  const sub = document.querySelector('#highlightsSection .card:nth-child(1) .card-sub');
+  const legend = document.getElementById('legendCitation');
+  if(!CITATION_YEARS.length){
+    if(sub) sub.textContent = 'CitationOverview.csv not found alongside this page';
+    if(legend) legend.innerHTML = '';
+    return;
+  }
+  const labels = CITATION_YEARS;
+  const pubData = labels.map(y => CITATION_BY_YEAR[y].publications);
+  const citeData = labels.map(y => CITATION_BY_YEAR[y].citations);
+  charts.citation = citationChart('chartCitation', labels, pubData, citeData);
+  const totalPubs = pubData.reduce((a,b)=>a+b,0);
+  const totalCites = citeData.reduce((a,b)=>a+b,0);
+  if(sub) sub.textContent = `${totalPubs.toLocaleString()} publications \u00b7 ${totalCites.toLocaleString()} citations, by year`;
+  renderLegend('legendCitation',
+    [['Publications', totalPubs],['Citations', totalCites]],
+    (l) => l === 'Publications' ? COLORS.teal : COLORS.gold
+  );
+}
+
+function renderIndexCoverageCard(){
+  const articles = RECORDS.filter(r => String(r.type).toLowerCase() === 'article');
+  const labels = INDEX_COVERAGE_FIELDS.map(f=>f.label);
+  const data = INDEX_COVERAGE_FIELDS.map(f => articles.filter(f.test).length);
+  const colors = INDEX_COVERAGE_FIELDS.map(f=>f.color);
+  destroyChart('indexCoverage');
+  charts.indexCoverage = verticalBarChart('chartIndexCoverage', labels, data, colors, articles.length);
+  renderLegend('legendIndexCoverage', labels.map((l,i)=>[l,data[i]]), (l)=> colors[labels.indexOf(l)]);
+  const sub = document.getElementById('indexCoverageSub');
+  if(sub) sub.textContent = `Among ${articles.length} Article records`;
+}
+
+function renderTypeCard(){
+  const map = countBy(RECORDS, 'type');
+  const entries = Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  const labels = entries.map(e=>e[0]);
+  const data = entries.map(e=>e[1]);
+  const colors = labels.map((_,i)=>TYPE_PALETTE[i % TYPE_PALETTE.length]);
+  destroyChart('type');
+  charts.type = barChart('chartType', labels, data, colors);
+  renderLegend('legendType', entries, (l)=> colors[labels.indexOf(l)]);
+}
+
+function renderScopusTypeCard(){
+  const scopusRecords = RECORDS.filter(r=>isScopus(r.scopus));
+  const map = countBy(scopusRecords, 'type');
+  const entries = Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  const labels = entries.map(e=>e[0]);
+  const data = entries.map(e=>e[1]);
+  const colors = labels.map((_,i)=>TYPE_PALETTE[i % TYPE_PALETTE.length]);
+  destroyChart('scopusType');
+  charts.scopusType = donutChart('chartScopusType', labels, data, colors, scopusRecords.length, {
+    display:true, text:String(scopusRecords.length), subtext:'Scopus'
+  });
+  renderLegend('legendScopusType', entries, (l)=> colors[labels.indexOf(l)]);
+  document.querySelector('#highlightsSection .card:nth-child(3) .card-sub').textContent =
+    `Publication type among ${scopusRecords.length} Scopus-indexed records`;
+}
+
+function renderSecondary(){
+  const published = RECORDS.filter(r=>String(r.status).toLowerCase()==='published').length;
+  const inPress = RECORDS.length - published;
+  const local = RECORDS.filter(r=>String(r.joint).toLowerCase()==='local').length;
+  const intl = RECORDS.filter(r=>String(r.joint).toLowerCase()==='international').length;
+  const coe = RECORDS.filter(r=> r.coe && r.coe !== '-').length;
+  const grid = document.getElementById('secondaryGrid');
+  const total = RECORDS.length || 1;
+  const cards = [
+    { n: published, l:'Published', pct: published/total },
+    { n: inPress, l:'In press', pct: inPress/total },
+    { n: intl, l:'International collaboration', pct: intl/total },
+    { n: coe, l:'CoE-linked publications', pct: coe/total },
+  ];
+  grid.innerHTML = cards.map(c=>`
+    <div class="stat-card">
+      <div class="top"><span class="n">${c.n}</span></div>
+      <div class="l">${c.l}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(c.pct*100).toFixed(0)}%"></div></div>
+    </div>`).join('');
+}
+
+/* ---------------------------------------------------------
+   Table
+--------------------------------------------------------- */
+function pillScopus(v){
+  return isScopus(v) ? `<span class="pill pill-scopus">Scopus</span>` : `<span class="pill pill-none">—</span>`;
+}
+function pillQuartile(v){
+  if(!v || v==='-') return `<span class="pill pill-none">—</span>`;
+  const cls = {'Q1':'pill-q1','Q2':'pill-q2','Q3':'pill-q3','Q4':'pill-q4'}[v] || 'pill-none';
+  return `<span class="pill ${cls}">${v}</span>`;
+}
+function pillStatus(v){
+  const low = String(v).toLowerCase();
+  if(low === 'published') return `<span class="pill pill-published">Published</span>`;
+  if(low.includes('press')) return `<span class="pill pill-inpress">In Press</span>`;
+  return `<span class="pill pill-none">${v}</span>`;
+}
+
+function populateFilters(){
+  const fill = (id, values) => {
+    const sel = document.getElementById(id);
+    const current = sel.value;
+    sel.innerHTML = sel.querySelector('option').outerHTML + values.map(v=>`<option value="${v}">${v}</option>`).join('');
+    if(values.includes(current)) sel.value = current;
+  };
+  fill('filterType', [...new Set(RECORDS.map(r=>r.type).filter(v=>v && v!=='-'))].sort());
+  fill('filterQuartile', [...new Set(RECORDS.map(r=>r.quartile).filter(v=>v && v!=='-'))].sort());
+  fill('filterStatus', [...new Set(RECORDS.map(r=>r.status).filter(v=>v && v!=='-'))].sort());
+  document.getElementById('filterScopus').innerHTML =
+    '<option value="">All Publications</option><option value="yes">Scopus-indexed</option><option value="no">Not indexed</option>';
+}
+
+function currentFilters(){
+  return {
+    q: document.getElementById('searchInput').value.trim().toLowerCase(),
+    scopus: document.getElementById('filterScopus').value,
+    type: document.getElementById('filterType').value,
+    quartile: document.getElementById('filterQuartile').value,
+    status: document.getElementById('filterStatus').value,
+  };
+}
+
+function renderTable(){
+  const f = currentFilters();
+  const rows = RECORDS.filter(r=>{
+    if(f.q && !(r.title.toLowerCase().includes(f.q) || String(r.publisher).toLowerCase().includes(f.q))) return false;
+    if(f.scopus === 'yes' && !isScopus(r.scopus)) return false;
+    if(f.scopus === 'no' && isScopus(r.scopus)) return false;
+    if(f.type && r.type !== f.type) return false;
+    if(f.quartile && r.quartile !== f.quartile) return false;
+    if(f.status && r.status !== f.status) return false;
+    return true;
+  });
+
+  document.getElementById('tableCountSub').textContent = `Showing ${rows.length} of ${RECORDS.length} records`;
+
+  const tbody = document.getElementById('tableBody');
+  if(!rows.length){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="8">No publications match these filters.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(r=>`
+    <tr>
+      <td class="mono">${r.no}</td>
+      <td class="title-cell">${r.title}</td>
+      <td>${pillScopus(r.scopus)}</td>
+      <td>${pillQuartile(r.quartile)}</td>
+      <td>${r.type}</td>
+      <td>${r.publisher}</td>
+      <td>${r.joint}</td>
+      <td>${pillStatus(r.status)}</td>
+    </tr>`).join('');
+}
+
+/* ---------------------------------------------------------
+   Full re-render
+--------------------------------------------------------- */
+function renderAll(){
+  renderHeroStats();
+  renderCitationCard();
+  renderTypeCard();
+  renderScopusTypeCard();
+  renderIndexCoverageCard();
+  renderSecondary();
+  populateFilters();
+  renderTable();
+}
+
+/* ---------------------------------------------------------
+   Events
+--------------------------------------------------------- */
+document.getElementById('targetInput').addEventListener('input', (e)=>{
+  const v = parseInt(e.target.value,10);
+  TARGET = (!isNaN(v) && v>0) ? v : 1;
+  renderHeroStats();
+});
+
+['searchInput','filterScopus','filterType','filterQuartile','filterStatus'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', renderTable);
+  document.getElementById(id).addEventListener('change', renderTable);
+});
+
+document.getElementById('uploadBtn').addEventListener('click', ()=> document.getElementById('fileInput').click());
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  RECORDS = JSON.parse(document.getElementById('seed-data').textContent);
+  document.getElementById('fileNameTag').textContent = 'Current file: sample data (bundled)';
+  renderAll();
+});
+
+document.getElementById('fileInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt)=>{
+    try{
+      const wb = XLSX.read(evt.target.result, { type:'binary' });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header:1, defval:'' });
+      const mapped = mapRowsFromSheet(rows);
+      if(!mapped.length){
+        alert('Could not find recognizable columns in this file. Expected headers like Title, Scopus Index, Journal Quartile, Publicatin Type, Publication Status.');
+        return;
+      }
+      RECORDS = mapped;
+      document.getElementById('fileNameTag').textContent = 'Current file: ' + file.name;
+      renderAll();
+    }catch(err){
+      alert('Could not read this file. Please upload a valid .xlsx, .xls or .csv export.');
+      console.error(err);
+    }
+  };
+  reader.readAsBinaryString(file);
+});
+
+/* ---------------------------------------------------------
+   Auto-load from the data files sitting alongside this page
+   -----------------------------------------------------------
+   Update the numbers each cycle by replacing DATA_FILE (an
+   .xlsx export with the same headers as the sample data) and/or
+   CITATION_FILE (a Scopus "Citation Overview" .csv export) in
+   the same folder as this HTML file on GitHub, then just
+   refresh the page — no need to touch this file again.
+--------------------------------------------------------- */
+const DATA_FILE = 'publications.xlsx';
+const CITATION_FILE = 'CitationOverview.csv';
+
+async function loadDataFile(){
+  try{
+    const res = await fetch(DATA_FILE, { cache:'no-store' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const buf = await res.arrayBuffer();
+    const wb = XLSX.read(buf, { type:'array' });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header:1, defval:'' });
+    const mapped = mapRowsFromSheet(rows);
+    if(!mapped.length) throw new Error('No recognizable columns in ' + DATA_FILE);
+    RECORDS = mapped;
+    document.getElementById('fileNameTag').textContent = 'Current file: ' + DATA_FILE;
+  }catch(err){
+    console.warn('Could not auto-load ' + DATA_FILE + ' — showing bundled sample data instead.', err);
+    document.getElementById('fileNameTag').textContent = 'Current file: sample data (bundled)';
+  }
+}
+
+async function loadCitationFile(){
+  try{
+    const res = await fetch(CITATION_FILE, { cache:'no-store' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const { years, byYear } = buildCitationAggregation(text);
+    if(!years.length) throw new Error('No citation-overview rows found in ' + CITATION_FILE);
+    CITATION_YEARS = years;
+    CITATION_BY_YEAR = byYear;
+  }catch(err){
+    console.warn('Could not auto-load ' + CITATION_FILE + ' — citation overview chart will be empty.', err);
+    CITATION_YEARS = [];
+    CITATION_BY_YEAR = {};
+  }
+}
+
+/* ---------------------------------------------------------
+   Init
+--------------------------------------------------------- */
+async function init(){
+  await Promise.all([loadDataFile(), loadCitationFile()]);
+  renderAll();
+}
+init();
+</script>
+</body>
+</html>
