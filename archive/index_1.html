@@ -102,11 +102,11 @@
     width:64px; background:rgba(255,255,255,.08); border:1px solid rgba(242,236,224,.3);
     color:#f2ece0; border-radius:6px; padding:6px 8px; font-family:'IBM Plex Mono',monospace; font-size:14px;
   }
-  .hero-kpi-row{display:flex; gap:10px; margin-top:22px; flex-wrap:wrap; justify-content:center;}
-  .hero-kpi-item{display:flex; flex-direction:column; align-items:center; width:64px;}
-  .hero-kpi-item .kpi-donut-chart{position:relative; width:56px; height:56px;}
-  .hero-kpi-item .kpi-donut-label{font-size:11px; font-weight:600; color:#f2ece0; margin:6px 0 0; text-align:center;}
-  .hero-kpi-item .kpi-of{font-size:10px; color:rgba(242,236,224,.55); margin-top:1px;}
+  .hero-kpi-row{display:flex; gap:18px; margin-top:14px; flex-wrap:wrap;}
+  .hero-kpi-item{display:flex; flex-direction:column; align-items:center; width:84px;}
+  .hero-kpi-item .kpi-donut-chart{position:relative; width:72px; height:72px;}
+  .hero-kpi-item .kpi-donut-label{font-size:12px; font-weight:600; color:#f2ece0; margin:6px 0 0; text-align:center;}
+  .hero-kpi-item .kpi-of{font-size:11px; color:rgba(242,236,224,.55); margin-top:1px;}
   .hero-mini-stats{display:flex; gap:26px; margin-top:26px; flex-wrap:wrap;}
   .hero-mini-stats div{border-left:2px solid var(--gold); padding-left:12px;}
   .hero-mini-stats .num{font-family:'IBM Plex Mono',monospace; font-size:22px; font-weight:600;}
@@ -249,25 +249,6 @@
         <input type="number" id="targetInput" value="78" min="1">
         publications
       </div>
-      <div class="hero-mini-stats">
-        <div><div class="num" id="statPublished">–</div><div class="lbl">Published</div></div>
-        <div><div class="num" id="statInPress">–</div><div class="lbl">In Press</div></div>
-        <div><div class="num" id="statRemaining">–</div><div class="lbl">Remaining to target</div></div>
-      </div>
-    </div>
-    <div class="gauge-wrap">
-      <div class="gauge">
-        <svg viewBox="0 0 200 200">
-          <circle cx="100" cy="100" r="86" fill="none" stroke="rgba(242,236,224,.14)" stroke-width="14"/>
-          <circle id="gaugeArc" cx="100" cy="100" r="86" fill="none" stroke="#5FB849" stroke-width="14"
-            stroke-linecap="round" stroke-dasharray="540" stroke-dashoffset="540"/>
-        </svg>
-        <div class="gauge-center">
-          <div class="count" id="gaugeCount">–</div>
-          <div class="of" id="gaugeOf">of 78 target</div>
-          <div class="pct" id="gaugePct">–%</div>
-        </div>
-      </div>
       <div class="hero-kpi-row">
         <div class="hero-kpi-item">
           <div class="kpi-donut-chart"><canvas id="chartKpiHindex"></canvas></div>
@@ -293,6 +274,25 @@
           <div class="kpi-donut-chart"><canvas id="chartKpiMycite"></canvas></div>
           <p class="kpi-donut-label">MyCite</p>
           <p class="kpi-of" id="kpiDonutOfMycite">– / 6</p>
+        </div>
+      </div>
+      <div class="hero-mini-stats">
+        <div><div class="num" id="statPublished">–</div><div class="lbl">Published</div></div>
+        <div><div class="num" id="statInPress">–</div><div class="lbl">In Press</div></div>
+        <div><div class="num" id="statRemaining">–</div><div class="lbl">Remaining to target</div></div>
+      </div>
+    </div>
+    <div class="gauge-wrap">
+      <div class="gauge">
+        <svg viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="86" fill="none" stroke="rgba(242,236,224,.14)" stroke-width="14"/>
+          <circle id="gaugeArc" cx="100" cy="100" r="86" fill="none" stroke="#5FB849" stroke-width="14"
+            stroke-linecap="round" stroke-dasharray="540" stroke-dashoffset="540"/>
+        </svg>
+        <div class="gauge-center">
+          <div class="count" id="gaugeCount">–</div>
+          <div class="of" id="gaugeOf">of 78 target</div>
+          <div class="pct" id="gaugePct">–%</div>
         </div>
       </div>
     </div>
@@ -575,7 +575,7 @@ function renderKPIDonuts(vals){
       [color, 'rgba(242,236,224,.16)'],
       s.target,
       { display:true, text: s.value == null ? '–' : Math.round((value / s.target) * 100) + '%',
-        subtext: met ? 'met' : null, color:'#f2ece0', subColor:'#8ED17A', fontSize:11, subFontSize:7 },
+        subtext: met ? 'met' : null, color:'#f2ece0', subColor:'#8ED17A', fontSize:14, subFontSize:8 },
       'rgba(7,59,76,1)'
     );
   });
