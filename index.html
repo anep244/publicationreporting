@@ -102,13 +102,11 @@
     width:64px; background:rgba(255,255,255,.08); border:1px solid rgba(242,236,224,.3);
     color:#f2ece0; border-radius:6px; padding:6px 8px; font-family:'IBM Plex Mono',monospace; font-size:14px;
   }
-  .hero-kpi-row{display:flex; gap:22px; margin-top:14px; flex-wrap:wrap;}
-  .hero-kpi-row .badge{
-    display:flex; align-items:center; gap:8px; font-size:13px; color:rgba(242,236,224,.85);
-    background:rgba(255,255,255,.06); border:1px solid rgba(242,236,224,.2);
-    padding:7px 14px; border-radius:20px;
-  }
-  .hero-kpi-row .badge b{font-family:'IBM Plex Mono',monospace; color:#f2ece0; font-size:14px;}
+  .hero-kpi-row{display:flex; gap:18px; margin-top:14px; flex-wrap:wrap;}
+  .hero-kpi-item{display:flex; flex-direction:column; align-items:center; width:84px;}
+  .hero-kpi-item .kpi-donut-chart{position:relative; width:72px; height:72px;}
+  .hero-kpi-item .kpi-donut-label{font-size:12px; font-weight:600; color:#f2ece0; margin:6px 0 0; text-align:center;}
+  .hero-kpi-item .kpi-of{font-size:11px; color:rgba(242,236,224,.55); margin-top:1px;}
   .hero-mini-stats{display:flex; gap:26px; margin-top:26px; flex-wrap:wrap;}
   .hero-mini-stats div{border-left:2px solid var(--gold); padding-left:12px;}
   .hero-mini-stats .num{font-family:'IBM Plex Mono',monospace; font-size:22px; font-weight:600;}
@@ -252,8 +250,31 @@
         publications
       </div>
       <div class="hero-kpi-row">
-        <span class="badge">h-index: <b>51</b></span>
-        <span class="badge">Citation: <b>1,042</b></span>
+        <div class="hero-kpi-item">
+          <div class="kpi-donut-chart"><canvas id="chartKpiHindex"></canvas></div>
+          <p class="kpi-donut-label">H-Index</p>
+          <p class="kpi-of" id="kpiDonutOfHindex">– / 49</p>
+        </div>
+        <div class="hero-kpi-item">
+          <div class="kpi-donut-chart"><canvas id="chartKpiCitation"></canvas></div>
+          <p class="kpi-donut-label">Citation</p>
+          <p class="kpi-of" id="kpiDonutOfCitation">– / 1,900</p>
+        </div>
+        <div class="hero-kpi-item">
+          <div class="kpi-donut-chart"><canvas id="chartKpiQ1Q2"></canvas></div>
+          <p class="kpi-donut-label">Q1 &amp; Q2</p>
+          <p class="kpi-of" id="kpiDonutOfQ1Q2">– / 24</p>
+        </div>
+        <div class="hero-kpi-item">
+          <div class="kpi-donut-chart"><canvas id="chartKpiAbdc"></canvas></div>
+          <p class="kpi-donut-label">ABDC</p>
+          <p class="kpi-of" id="kpiDonutOfAbdc">– / 24</p>
+        </div>
+        <div class="hero-kpi-item">
+          <div class="kpi-donut-chart"><canvas id="chartKpiMycite"></canvas></div>
+          <p class="kpi-donut-label">MyCite</p>
+          <p class="kpi-of" id="kpiDonutOfMycite">– / 6</p>
+        </div>
       </div>
       <div class="hero-mini-stats">
         <div><div class="num" id="statPublished">–</div><div class="lbl">Published</div></div>
@@ -376,11 +397,20 @@
 --------------------------------------------------------- */
 let RECORDS = JSON.parse(document.getElementById('seed-data').textContent);
 let TARGET = 78;
-let charts = { type:null, scopusType:null, indexCoverage:null, citation:null };
+let charts = { type:null, scopusType:null, indexCoverage:null, citation:null,
+  kpiHindex:null, kpiCitation:null, kpiQ1Q2:null, kpiAbdc:null, kpiMycite:null };
 
 /* Citation Overview.csv aggregation, keyed by Publication Year */
 let CITATION_YEARS = [];
 let CITATION_BY_YEAR = {};
+/* Live figures pulled straight from the CSV: the h-index note near
+   the top of the file, and the current-year citation total (the
+   right-most named-year bucket, e.g. cell M7 for a 2026 export). */
+let CITATION_H_INDEX = null;
+let CITATION_CURRENT_TOTAL = null;
+
+/* Annual KPI targets, shown alongside the publication target above */
+const KPI_TARGETS = { q1q2: 24, abdc: 24, mycite: 6, hindex: 49, citation: 1900 };
 
 const COLORS = {
   gold:'#5FB849', goldSoft:'#8ED17A', navy:'#073B4C', teal:'#00A6D7',
@@ -506,6 +536,49 @@ function renderHeroStats(){
   document.getElementById('statInPress').textContent = inPress;
   document.getElementById('statRemaining').textContent = remaining;
   renderGauge();
+  renderKPITargets();
+}
+
+function renderKPITargets(){
+  const q1q2 = RECORDS.filter(r => r.quartile === 'Q1' || r.quartile === 'Q2').length;
+  const abdc = RECORDS.filter(r => r.abdc && r.abdc !== '-').length;
+  const mycite = RECORDS.filter(r => r.mycite && r.mycite !== '-').length;
+  renderKPIDonuts({ hindex:CITATION_H_INDEX, citation:CITATION_CURRENT_TOTAL, q1q2, abdc, mycite });
+}
+
+/* Renders the five "progress vs target" doughnuts in the hero (ordered:
+   H-Index, Citation, Q1 & Q2, ABDC, MyCite). Each is drawn as
+   [reached, remaining], with remaining clamped to 0 once a KPI has met
+   or exceeded its target. Colors/sizing are tuned for the small, dark
+   hero background rather than the light card surfaces elsewhere. */
+function renderKPIDonuts(vals){
+  const specs = [
+    { key:'kpiHindex',   canvas:'chartKpiHindex',   ofEl:'kpiDonutOfHindex',   value:vals.hindex,   target:KPI_TARGETS.hindex,   color:COLORS.teal,     fmt:v=>v.toLocaleString() },
+    { key:'kpiCitation', canvas:'chartKpiCitation', ofEl:'kpiDonutOfCitation', value:vals.citation, target:KPI_TARGETS.citation, color:COLORS.goldSoft, fmt:v=>v.toLocaleString() },
+    { key:'kpiQ1Q2',     canvas:'chartKpiQ1Q2',     ofEl:'kpiDonutOfQ1Q2',     value:vals.q1q2,     target:KPI_TARGETS.q1q2,     color:COLORS.teal,     fmt:v=>v.toLocaleString() },
+    { key:'kpiAbdc',     canvas:'chartKpiAbdc',     ofEl:'kpiDonutOfAbdc',     value:vals.abdc,     target:KPI_TARGETS.abdc,     color:COLORS.teal,     fmt:v=>v.toLocaleString() },
+    { key:'kpiMycite',   canvas:'chartKpiMycite',   ofEl:'kpiDonutOfMycite',   value:vals.mycite,   target:KPI_TARGETS.mycite,   color:COLORS.teal,     fmt:v=>v.toLocaleString() },
+  ];
+  specs.forEach(s => {
+    const el = document.getElementById(s.ofEl);
+    if(el) el.textContent = (s.value == null ? '–' : s.fmt(s.value)) + ' / ' + s.fmt(s.target);
+    destroyChart(s.key);
+    const value = s.value == null ? 0 : s.value;
+    const met = s.value != null && s.value >= s.target;
+    const reached = Math.min(value, s.target);
+    const remaining = Math.max(s.target - value, 0);
+    const color = met ? COLORS.goldSoft : s.color;
+    charts[s.key] = donutChart(
+      s.canvas,
+      ['Reached','Remaining'],
+      [reached, remaining],
+      [color, 'rgba(242,236,224,.16)'],
+      s.target,
+      { display:true, text: s.value == null ? '–' : Math.round((value / s.target) * 100) + '%',
+        subtext: met ? 'met' : null, color:'#f2ece0', subColor:'#8ED17A', fontSize:14, subFontSize:8 },
+      'rgba(7,59,76,1)'
+    );
+  });
 }
 
 /* Draws a total (and optional label) in the hole of a doughnut chart */
@@ -517,28 +590,30 @@ const centerTextPlugin = {
     const { ctx, chartArea } = chart;
     const cx = (chartArea.left + chartArea.right) / 2;
     const cy = (chartArea.top + chartArea.bottom) / 2;
+    const size = opts.fontSize || 28;
+    const subSize = opts.subFontSize || 11;
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#1c1c1e';
-    ctx.font = "700 28px 'IBM Plex Mono', monospace";
-    ctx.fillText(opts.text, cx, cy + (opts.subtext ? -9 : 0));
+    ctx.fillStyle = opts.color || '#1c1c1e';
+    ctx.font = `700 ${size}px 'IBM Plex Mono', monospace`;
+    ctx.fillText(opts.text, cx, cy + (opts.subtext ? -(size * 0.32) : 0));
     if(opts.subtext){
-      ctx.fillStyle = '#58585A';
-      ctx.font = "600 11px 'Inter', sans-serif";
-      ctx.fillText(opts.subtext, cx, cy + 13);
+      ctx.fillStyle = opts.subColor || '#58585A';
+      ctx.font = `600 ${subSize}px 'Inter', sans-serif`;
+      ctx.fillText(opts.subtext, cx, cy + (size * 0.46));
     }
     ctx.restore();
   }
 };
 Chart.register(centerTextPlugin);
 
-function donutChart(canvasId, labels, data, colors, total, centerText){
+function donutChart(canvasId, labels, data, colors, total, centerText, borderColor){
   const denom = total || RECORDS.length || 1;
   const ctx = document.getElementById(canvasId).getContext('2d');
   return new Chart(ctx, {
     type:'doughnut',
-    data:{ labels, datasets:[{ data, backgroundColor:colors, borderWidth:2, borderColor:'#fffdf8' }] },
+    data:{ labels, datasets:[{ data, backgroundColor:colors, borderWidth:2, borderColor:borderColor || '#fffdf8' }] },
     options:{
       responsive:true, maintainAspectRatio:false, cutout:'68%',
       plugins:{ legend:{display:false}, tooltip:{ callbacks:{
@@ -627,7 +702,7 @@ function parseCSVText(text){
 function buildCitationAggregation(text){
   const rows = parseCSVText(text);
   const headerIdx = rows.findIndex(r => String(r[0]||'').trim().toLowerCase() === 'publication year');
-  if(headerIdx === -1 || headerIdx === 0) return { years: [], byYear: {} };
+  if(headerIdx === -1 || headerIdx === 0) return { years: [], byYear: {}, latestYear: null, latestYearTotal: null };
 
   /* Row directly above the header holds the citation-year bucket labels
      (columns G onward: <2021, 2021, 2022, ...). The header row itself
@@ -663,7 +738,22 @@ function buildCitationAggregation(text){
       citations: Object.prototype.hasOwnProperty.call(citationTotals, y) ? citationTotals[y] : null
     };
   });
-  return { years, byYear };
+
+  /* Current-year citation total: the right-most named-year bucket in
+     the totals row (e.g. cell M7 for a export whose columns run
+     <2021..2026) — this is the "live" citation figure shown as a KPI. */
+  let latestYear = null;
+  Object.keys(citationTotals).forEach(y => { if(latestYear === null || y > latestYear) latestYear = y; });
+  const latestYearTotal = latestYear !== null ? citationTotals[latestYear] : null;
+
+  return { years, byYear, latestYear, latestYearTotal };
+}
+
+/* Pulls the h-index figure out of the free-text note near the top of
+   a Scopus "Citation Overview" export, e.g. "h-index = 51 (...)" */
+function extractHIndex(text){
+  const m = text.match(/h-index\s*=\s*(\d+)/i);
+  return m ? parseInt(m[1], 10) : null;
 }
 
 /* Draws each bar's total publication count above the bar */
@@ -993,14 +1083,18 @@ async function loadCitationFile(){
     const res = await fetch(CITATION_FILE, { cache:'no-store' });
     if(!res.ok) throw new Error('HTTP ' + res.status);
     const text = await res.text();
-    const { years, byYear } = buildCitationAggregation(text);
+    const { years, byYear, latestYearTotal } = buildCitationAggregation(text);
     if(!years.length) throw new Error('No citation-overview rows found in ' + CITATION_FILE);
     CITATION_YEARS = years;
     CITATION_BY_YEAR = byYear;
+    CITATION_CURRENT_TOTAL = latestYearTotal;
+    CITATION_H_INDEX = extractHIndex(text);
   }catch(err){
     console.warn('Could not auto-load ' + CITATION_FILE + ' — citation overview chart will be empty.', err);
     CITATION_YEARS = [];
     CITATION_BY_YEAR = {};
+    CITATION_CURRENT_TOTAL = null;
+    CITATION_H_INDEX = null;
   }
 }
 
