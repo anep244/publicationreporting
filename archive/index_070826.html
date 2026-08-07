@@ -186,8 +186,6 @@
   tbody td{padding:11px 14px; border-bottom:1px solid var(--line); vertical-align:top;}
   tbody tr:hover{background:#faf7ee;}
   td.title-cell{max-width:420px; line-height:1.45;}
-  .doi-link{color:var(--teal); text-decoration:underline; text-underline-offset:2px; word-break:break-all;}
-  .doi-link:hover{color:var(--navy);}
   .pill{
     display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:600; white-space:nowrap;
   }
@@ -933,22 +931,6 @@ function pillStatus(v){
   return `<span class="pill pill-none">${v}</span>`;
 }
 
-function linkifyDOI(text){
-  let html = String(text);
-  // Full DOI URLs already present in the citation text, e.g. https://doi.org/10.xxxx/xxxx
-  html = html.replace(/https?:\/\/(dx\.)?doi\.org\/[^\s"'<>]+/gi, (url) => {
-    const m = url.match(/^(.*?)([.,;:)\]]*)$/); // keep trailing sentence punctuation outside the link
-    const clean = m[1], trail = m[2];
-    return `<a href="${clean}" target="_blank" rel="noopener noreferrer" class="doi-link">${clean}</a>${trail}`;
-  });
-  // Bare DOI codes introduced by "doi:" with no URL, e.g. doi: 10.xxxx/xxxx
-  html = html.replace(/\bdoi:\s*(10\.\d{4,9}\/[^\s"'<>,;)]+)/gi, (full, code) => {
-    const clean = code.replace(/[.,;:)\]]+$/, '');
-    return `doi: <a href="https://doi.org/${clean}" target="_blank" rel="noopener noreferrer" class="doi-link">${clean}</a>`;
-  });
-  return html;
-}
-
 function populateFilters(){
   const fill = (id, values) => {
     const sel = document.getElementById(id);
@@ -995,7 +977,7 @@ function renderTable(){
   tbody.innerHTML = rows.map(r=>`
     <tr>
       <td class="mono">${r.no}</td>
-      <td class="title-cell">${linkifyDOI(r.title)}</td>
+      <td class="title-cell">${r.title}</td>
       <td>${pillScopus(r.scopus)}</td>
       <td>${pillQuartile(r.quartile)}</td>
       <td>${r.type}</td>
